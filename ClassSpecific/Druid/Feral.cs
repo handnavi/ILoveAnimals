@@ -576,7 +576,7 @@ namespace Singular.ClassSpecific.Druid
                                    ret => (!StyxWoW.Me.ActiveAuras.ContainsKey("Berserk") ||
                                            CurrentEnergy < 25) &&
                                           StyxWoW.Me.ComboPoints == 5 &&
-                                          StyxWoW.Me.CurrentTarget.GetAuraTimeLeft("Rip", true).TotalSeconds >= 14 &&
+                                          StyxWoW.Me.CurrentTarget.GetAuraTimeLeft("Rip", true).TotalSeconds >= 12 &&
                                           StyxWoW.Me.GetAuraTimeLeft("Savage Roar", true).TotalSeconds >= 10 &&
                                           StyxWoW.Me.CurrentTarget.Level >= 85),
                         //#20 
