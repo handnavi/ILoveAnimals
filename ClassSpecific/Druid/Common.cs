@@ -25,9 +25,16 @@ namespace Singular.ClassSpecific.Druid
         public static Composite CreateDruidOutOfCombatBuffs()
         {
             return new PrioritySelector(
-                new Decorator(ret => !SingularSettings.Instance.Druid.DisableBuffs && !StyxWoW.Me.ActiveAuras.ContainsKey("Prowl")
-                    && !StyxWoW.Me.ActiveAuras.ContainsKey("Shadowmeld") && StyxWoW.Me.IsAlive,
-                              Spell.BuffSelf("Mark of the Wild"))); 
+                new Decorator(
+                    ret => !SingularSettings.Instance.Druid.DisableBuffs && !StyxWoW.Me.ActiveAuras.ContainsKey("Prowl")
+                           && !StyxWoW.Me.ActiveAuras.ContainsKey("Shadowmeld") && StyxWoW.Me.IsAlive,
+                Spell.BuffSelf("Mark of the Wild")),
+
+                Spell.BuffSelf("Cat Form", ret => !StyxWoW.Me.Mounted && StyxWoW.Me.Shapeshift != ShapeshiftForm.Cat && SingularSettings.Instance.Druid.Stealth),
+                Spell.BuffSelf("Prowl",
+                               ret =>
+                               SingularSettings.Instance.Druid.Stealth &&
+                               StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat));
         }
 
         [Class(WoWClass.Druid)]

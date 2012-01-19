@@ -37,9 +37,9 @@ namespace Singular.ClassSpecific.Druid
                 if (StyxWoW.Me.Level >= 80 && StyxWoW.Me.Level <= 85 && !StyxWoW.Me.IsInInstance && !StyxWoW.Me.IsInRaid)
                     health = 5000;
                 if (StyxWoW.Me.Level >= 70 && StyxWoW.Me.Level <= 79)
-                    health = StyxWoW.Me.Level * 30;
+                    health = StyxWoW.Me.Level*30;
                 if (StyxWoW.Me.Level >= 10 && StyxWoW.Me.Level <= 69)
-                    health = StyxWoW.Me.Level * 20;
+                    health = StyxWoW.Me.Level*20;
                 return health;
             }
         }
@@ -153,30 +153,52 @@ namespace Singular.ClassSpecific.Druid
                                && !unit.IsNonCombatPet
                                && !unit.IsCritter
                                && unit.DistanceSqr
-                               <= 15 * 15).ToList();
+                               <= 15*15).ToList();
             }
         }
 
         [Spec(TalentSpec.FeralDruid)]
         [Spec(TalentSpec.FeralTankDruid)]
-        [Behavior(BehaviorType.Combat)]
         [Behavior(BehaviorType.Pull)]
+        [Class(WoWClass.Druid)]
+        [Context(WoWContext.All)]
+        public static Composite CreateFeralPull()
+        {
+            return new PrioritySelector(
+                new Decorator(
+                    // We shall tank if we are assigned as dungeon/raid tank or the current tank is dead
+                    ret => Group.Tank != null && (Group.Tank.IsMe || !Group.Tank.IsAlive),
+                    CreateBearTankCombat()),
+                new Decorator(
+                    // Switch to Bear on low live or on adds
+                    ret =>
+                    StyxWoW.Me.ActiveAuras.ContainsKey("Frenzied Regeneration") ||
+                    StyxWoW.Me.HealthPercent <= SingularSettings.Instance.Druid.BearLife ||
+                    EnemyUnits.Count >= SingularSettings.Instance.Druid.BearCount,
+                    CreateBearTankCombat()),
+                CreateFeralCatPull()
+                );
+        }
+
+
+        [Spec(TalentSpec.FeralDruid)]
+        [Spec(TalentSpec.FeralTankDruid)]
+        [Behavior(BehaviorType.Combat)]
         [Class(WoWClass.Druid)]
         [Context(WoWContext.All)]
         public static Composite CreateFeralCombat()
         {
             return new PrioritySelector(
                 new Decorator(
-                // We shall tank if we are assigned as dungeon/raid tank or the current tank is dead
+                    // We shall tank if we are assigned as dungeon/raid tank or the current tank is dead
                     ret => Group.Tank != null && (Group.Tank.IsMe || !Group.Tank.IsAlive),
                     CreateBearTankCombat()),
                 new Decorator(
-                // Switch to Bear on low live or on adds
+                    // Switch to Bear on low live or on adds
                     ret =>
                     StyxWoW.Me.ActiveAuras.ContainsKey("Frenzied Regeneration") ||
                     StyxWoW.Me.HealthPercent <= SingularSettings.Instance.Druid.BearLife ||
-                    (Clusters.GetClusterCount(StyxWoW.Me, Unit.NearbyUnfriendlyUnits, ClusterType.Cone, 7f)
-                     >= SingularSettings.Instance.Druid.BearCount),
+                    EnemyUnits.Count >= SingularSettings.Instance.Druid.BearCount,
                     CreateBearTankCombat()),
                 CreateFeralCatCombat()
                 );
@@ -189,6 +211,13 @@ namespace Singular.ClassSpecific.Druid
             return new PrioritySelector(
                 CreateFeralCatManualForms(),
                 CreateFeralCatActualCombat());
+        }
+
+        public static Composite CreateFeralCatPull()
+        {
+            return new PrioritySelector(
+                CreateFeralCatManualForms(),
+                CreateFeralCatActualPull());
         }
 
         public static Composite CreateFeralCatManualForms()
@@ -214,6 +243,37 @@ namespace Singular.ClassSpecific.Druid
                         new ActionAlwaysSucceed())));
         }
 
+        public static Composite CreateFeralCatActualPull()
+        {
+            return new PrioritySelector(
+                Safers.EnsureTarget(),
+                Movement.CreateMoveToLosBehavior(),
+                Movement.CreateFaceTargetBehavior(),
+                Helpers.Common.CreateAutoAttack(true),
+                new Decorator(
+                    ret =>
+                    !StyxWoW.Me.IsInRaid && !StyxWoW.Me.IsInParty && SingularSettings.Instance.Druid.FeralHeal,
+                    Resto.CreateRestoDruidHealOnlyBehavior(true)),
+                //based on Ej
+                //http://elitistjerks.com/f73/t127445-feral_cat_cataclysm_4_3_dragon_soul/#Rotation
+                Spell.BuffSelf("Prowl",
+                               ret =>
+                               SingularSettings.Instance.Druid.ProwlPounce &&
+                               StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat),
+                Spell.Cast("Pounce",
+                           ret =>
+                           StyxWoW.Me.ActiveAuras.ContainsKey("Prowl") &&
+                           SingularSettings.Instance.Druid.ProwlPounce),
+                Spell.Cast("Faerie Fire (Feral)", ret => SingularSettings.Instance.Druid.PullFFF),
+                Spell.Cast(
+                    "Feral Charge (Cat)",
+                    ret =>
+                    Settings.UseFeralChargeCat && StyxWoW.Me.CurrentTarget.Distance >= 10 &&
+                    StyxWoW.Me.CurrentTarget.Distance <= 23),
+                Movement.CreateMoveToMeleeBehavior(true));
+        }
+
+
         public static Composite CreateFeralCatActualCombat()
         {
             return new PrioritySelector(
@@ -224,24 +284,25 @@ namespace Singular.ClassSpecific.Druid
                 new Decorator(
                     ret => !StyxWoW.Me.IsInRaid && !StyxWoW.Me.IsInParty && SingularSettings.Instance.Druid.FeralHeal,
                     Resto.CreateRestoDruidHealOnlyBehavior(true)),
-                //based on Ej
-                //http://elitistjerks.com/f73/t127445-feral_cat_cataclysm_4_3_dragon_soul/#Rotation
-
-                Spell.Cast("Faerie Fire (Feral)", ret => SingularSettings.Instance.Druid.PullFFF),
+                new Decorator(ret => !SingularSettings.Instance.Druid.DisableInterrupts,
+                              Helpers.Common.CreateInterruptSpellCast(ret => StyxWoW.Me.CurrentTarget)),
+                Movement.CreateMoveBehindTargetBehavior(),
+                new Decorator(
+                    ret =>
+                    (SingularSettings.Instance.Druid.Shift && StyxWoW.Me.HasAuraWithMechanic(WoWSpellMechanic.Rooted) &&
+                     StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat),
+                    new Sequence(
+                        new Action(ret => Lua.DoString("RunMacroText(\"/Cast !Cat Form\")")))),
+                
                 Spell.Cast(
                     "Feral Charge (Cat)",
                     ret =>
                     Settings.UseFeralChargeCat && StyxWoW.Me.CurrentTarget.Distance >= 10 &&
-                    StyxWoW.Me.CurrentTarget.Distance <= 23), // these params often fail
+                    StyxWoW.Me.CurrentTarget.Distance <= 23),
 
-
-                new Decorator(ret => !SingularSettings.Instance.Druid.DisableInterrupts,
-                              Helpers.Common.CreateInterruptSpellCast(ret => StyxWoW.Me.CurrentTarget)),
-                Movement.CreateMoveBehindTargetBehavior(),
                 /*Bases on Mew!*/
 
                 /*Tiger's Fury!*/
-
                 // #1
                 Spell.BuffSelf("Tiger's Fury", ret => CurrentEnergy <= 26 &&
                                                       !SpellManager.GlobalCooldown &&
@@ -269,7 +330,7 @@ namespace Singular.ClassSpecific.Druid
                 Spell.Cast("Berserk",
                            ret =>
                            SingularSettings.Instance.Druid.UseBerserkCat && !SpellManager.GlobalCooldown &&
-                           StyxWoW.Me.CurrentTarget.CurrentHealth / Finisherhealth < 25 &&
+                           StyxWoW.Me.CurrentTarget.CurrentHealth/Finisherhealth < 25 &&
                            SpellManager.HasSpell("Tiger's Fury") &&
                            SpellManager.Spells["Tiger's Fury"].CooldownTimeLeft().TotalSeconds > 6),
                 /*AOE*/
@@ -313,7 +374,7 @@ namespace Singular.ClassSpecific.Druid
                     ret => EnemyUnits.Count <
                            SingularSettings.Instance.Druid.SwipeCount,
                     new PrioritySelector(
-                //#6
+                        //#6
                         Spell.Cast("Faerie Fire (Feral)",
                                    ret =>
                                    StyxWoW.Me.CurrentTarget.IsBoss() &&
@@ -322,14 +383,14 @@ namespace Singular.ClassSpecific.Druid
                                      StyxWoW.Me.CurrentTarget.GetAuraTimeLeft("Faerie Fire", true).TotalSeconds <= 1)
                                    )
                             ),
-                //#7
+                        //#7
                         Spell.Cast("Mangle (Cat)",
                                    ret =>
                                    !StyxWoW.Me.CurrentTarget.HasBleedDebuff() ||
                                    (StyxWoW.Me.CurrentTarget.HasMyAura("Mangle") &&
                                     StyxWoW.Me.CurrentTarget.GetAuraTimeLeft("Mangle", true).TotalSeconds <= 2)
                             ),
-                /*Ravage!*/
+                        /*Ravage!*/
 
                         //#8
                         new Decorator(
@@ -341,7 +402,7 @@ namespace Singular.ClassSpecific.Druid
                                     )
                                 )
                             ),
-                /*Blood in the Water!*/
+                        /*Blood in the Water!*/
 
                         //#9
                         Spell.Cast("Ferocious Bite",
@@ -350,19 +411,19 @@ namespace Singular.ClassSpecific.Druid
                                           StyxWoW.Me.CurrentTarget.GetAuraTimeLeft("Rip", true).TotalSeconds <= 2.1 &&
                                           StyxWoW.Me.CurrentTarget.HasMyAura("Rip")
                             ),
-                //#10
+                        //#10
                         Spell.Cast("Ferocious Bite",
                                    ret => StyxWoW.Me.ComboPoints == 5 &&
                                           StyxWoW.Me.CurrentTarget.HealthPercent <= (HasTeir13Bonus ? 60 : 25) &&
                                           StyxWoW.Me.CurrentTarget.HasMyAura("Rip")
                             ),
-                //Missing Glyph of Bloodletting
+                        //Missing Glyph of Bloodletting
 
                         //#Ferocious Bite for low lvls 
                         Spell.Cast("Ferocious Bite",
                                    ret => StyxWoW.Me.Level <= 60 &&
-                                          StyxWoW.Me.CurrentTarget.HealthPercent <= StyxWoW.Me.ComboPoints * 10),
-                //#rip for low lvls 
+                                          StyxWoW.Me.CurrentTarget.HealthPercent <= StyxWoW.Me.ComboPoints*10),
+                        //#rip for low lvls 
                         Spell.Cast("Rip",
                                    ret => StyxWoW.Me.ComboPoints == 5 &&
                                           StyxWoW.Me.Level <= 60 &&
@@ -371,7 +432,7 @@ namespace Singular.ClassSpecific.Druid
                                           (StyxWoW.Me.CurrentTarget.HasMyAura("Rip") &&
                                            StyxWoW.Me.CurrentTarget.GetAuraTimeLeft("Rip", true).TotalSeconds < 2.0)
                             ),
-                //#rake for low lvls
+                        //#rake for low lvls
                         Spell.Cast("Rake",
                                    ret => (!StyxWoW.Me.CurrentTarget.HasMyAura("Rake") ||
                                            (StyxWoW.Me.CurrentTarget.HasMyAura("Rake") &&
@@ -380,7 +441,7 @@ namespace Singular.ClassSpecific.Druid
                                           StyxWoW.Me.CurrentTarget.HealthPercent > 50
                                           && StyxWoW.Me.Level <= 60
                             ),
-                // FB / Rip / Rake while pvping
+                        // FB / Rip / Rake while pvping
 
 
                         Spell.Cast("Ferocious Bite",
@@ -418,12 +479,12 @@ namespace Singular.ClassSpecific.Druid
                                      SpellManager.Spells["Tiger's Fury"].CooldownTimeLeft().TotalSeconds) ||
                                     CurrentEnergy >= 71)
                             ),
-                /*Regular Rotation*/
+                        /*Regular Rotation*/
 
                         //#11
                         Spell.Cast("Rip",
                                    ret => StyxWoW.Me.ComboPoints == 5 &&
-                                          StyxWoW.Me.CurrentTarget.CurrentHealth / Finisherhealth >= 6 &&
+                                          StyxWoW.Me.CurrentTarget.CurrentHealth/Finisherhealth >= 6 &&
                                           SpellManager.HasSpell("Tiger's Fury") &&
                                           (!StyxWoW.Me.CurrentTarget.HasMyAura("Rip") ||
                                            (StyxWoW.Me.CurrentTarget.HasMyAura("Rip") &&
@@ -433,22 +494,22 @@ namespace Singular.ClassSpecific.Druid
                                               StyxWoW.Me.CurrentTarget.GetAuraTimeLeft("Rip", true).TotalSeconds + 2 <=
                                               SpellManager.Spells["Tiger's Fury"].CooldownTimeLeft().TotalSeconds)
                             ),
-                //#12       
+                        //#12       
                         Spell.Cast("Ferocious Bite",
                                    ret => StyxWoW.Me.ActiveAuras.ContainsKey("Berserk") &&
                                           StyxWoW.Me.ComboPoints == 5 &&
                                           CurrentEnergy >= 60 &&
                                           StyxWoW.Me.CurrentTarget.GetAuraTimeLeft("Rip", true).TotalSeconds > 5 &&
                                           StyxWoW.Me.GetAuraTimeLeft("Savage Roar", true).TotalSeconds >= 3),
-                //#13
+                        //#13
                         Spell.Cast("Rake",
-                                   ret => StyxWoW.Me.CurrentTarget.CurrentHealth / Finisherhealth >= 8.5 &&
+                                   ret => StyxWoW.Me.CurrentTarget.CurrentHealth/Finisherhealth >= 8.5 &&
                                           StyxWoW.Me.ActiveAuras.ContainsKey("Tiger's Fury") &&
                                           StyxWoW.Me.CurrentTarget.HasMyAura("Rake") &&
                                           !IsrakeTfed),
-                //#14
+                        //#14
                         Spell.Cast("Rake",
-                                   ret => StyxWoW.Me.CurrentTarget.CurrentHealth / Finisherhealth >= 8.5 &&
+                                   ret => StyxWoW.Me.CurrentTarget.CurrentHealth/Finisherhealth >= 8.5 &&
                                           (!StyxWoW.Me.CurrentTarget.HasMyAura("Rake") ||
                                            (StyxWoW.Me.CurrentTarget.HasMyAura("Rake") &&
                                             StyxWoW.Me.CurrentTarget.GetAuraTimeLeft("Rake", true).TotalSeconds < 3.0)
@@ -460,7 +521,7 @@ namespace Singular.ClassSpecific.Druid
                                             SpellManager.Spells["Tiger's Fury"].CooldownTimeLeft().TotalSeconds) ||
                                            CurrentEnergy >= 71)
                             ),
-                //#15
+                        //#15
                         Spell.Cast("Shred",
                                    ret =>
                                    SingularSettings.Instance.Druid.UseShred &&
@@ -469,14 +530,14 @@ namespace Singular.ClassSpecific.Druid
                         Spell.Cast("Mangle (Cat)", ret => !StyxWoW.Me.IsBehind(StyxWoW.Me.CurrentTarget) &&
                                                           StyxWoW.Me.ActiveAuras.ContainsKey("Clearcasting")
                             ),
-                //#16
+                        //#16
                         Spell.BuffSelf("Savage Roar",
                                        ret =>
                                        SingularSettings.Instance.Druid.UseSavageRoarCat && StyxWoW.Me.ComboPoints > 0 &&
                                        (!StyxWoW.Me.ActiveAuras.ContainsKey("Savage Roar") ||
                                         StyxWoW.Me.GetAuraTimeLeft("Savage Roar", true).TotalSeconds <= 2)
                             ),
-                //#17
+                        //#17
                         new Decorator(
                             ret => (StyxWoW.Me.ActiveAuras.ContainsKey("Stampede") &&
                                     SpellManager.HasSpell("Tiger's Fury") &&
@@ -487,11 +548,11 @@ namespace Singular.ClassSpecific.Druid
                                     )
                                 )
                             ),
-                //#new
+                        //#new
                         Spell.BuffSelf("Savage Roar",
                                        ret =>
                                        SingularSettings.Instance.Druid.UseSavageRoarCat && StyxWoW.Me.ComboPoints == 5 &&
-                                       StyxWoW.Me.CurrentTarget.CurrentHealth / Finisherhealth >= 9 &&
+                                       StyxWoW.Me.CurrentTarget.CurrentHealth/Finisherhealth >= 9 &&
                                        StyxWoW.Me.CurrentTarget.HasMyAura("Rip") &&
                                        StyxWoW.Me.CurrentTarget.GetAuraTimeLeft("Rip", true).TotalSeconds <= 12
                                        &&
@@ -499,11 +560,11 @@ namespace Singular.ClassSpecific.Druid
                                         StyxWoW.Me.GetAuraTimeLeft("Savage Roar", true).TotalSeconds
                                         <= StyxWoW.Me.CurrentTarget.GetAuraTimeLeft("Rip", true).TotalSeconds + 6)
                             ),
-                //#18
+                        //#18
                         Spell.Cast("Ferocious Bite",
                                    ret => StyxWoW.Me.ComboPoints == 5 &&
-                                          StyxWoW.Me.CurrentTarget.CurrentHealth / Finisherhealth <= 7),
-                //#19
+                                          StyxWoW.Me.CurrentTarget.CurrentHealth/Finisherhealth <= 7),
+                        //#19
                         Spell.Cast("Ferocious Bite",
                                    ret => (!StyxWoW.Me.ActiveAuras.ContainsKey("Berserk") ||
                                            CurrentEnergy < 25) &&
@@ -518,7 +579,7 @@ namespace Singular.ClassSpecific.Druid
                                           StyxWoW.Me.CurrentTarget.GetAuraTimeLeft("Rip", true).TotalSeconds >= 14 &&
                                           StyxWoW.Me.GetAuraTimeLeft("Savage Roar", true).TotalSeconds >= 10 &&
                                           StyxWoW.Me.CurrentTarget.Level >= 85),
-                //#20 
+                        //#20 
                         new Decorator(
                             ret => (StyxWoW.Me.ActiveAuras.ContainsKey("Stampede") &&
                                     HasTeir13Bonus2 &&
@@ -530,7 +591,7 @@ namespace Singular.ClassSpecific.Druid
                                     )
                                 )
                             ),
-                //#21
+                        //#21
                         new Decorator(
                             ret => (StyxWoW.Me.ActiveAuras.ContainsKey("Stampede") &&
                                     !StyxWoW.Me.ActiveAuras.ContainsKey("Clearcasting") &&
@@ -542,8 +603,8 @@ namespace Singular.ClassSpecific.Druid
                                     )
                                 )
                             ),
-                //Ignore 4x T11 Bonus
-                //#22
+                        //Ignore 4x T11 Bonus
+                        //#22
                         Spell.Cast("Shred",
                                    ret =>
                                    SingularSettings.Instance.Druid.UseShred &&
@@ -557,7 +618,7 @@ namespace Singular.ClassSpecific.Druid
                                                            StyxWoW.Me.ActiveAuras.ContainsKey("Berserk")
                                                           )
                             ),
-                //#23
+                        //#23
                         Spell.Cast("Shred",
                                    ret =>
                                    SingularSettings.Instance.Druid.UseShred &&
@@ -577,7 +638,7 @@ namespace Singular.ClassSpecific.Druid
                                                            StyxWoW.Me.GetAuraTimeLeft("Savage Roar", true).TotalSeconds <=
                                                            2)
                             ),
-                //#24
+                        //#24
                         Spell.Cast("Shred",
                                    ret =>
                                    SingularSettings.Instance.Druid.UseShred &&
@@ -588,15 +649,15 @@ namespace Singular.ClassSpecific.Druid
                                                           SpellManager.HasSpell("Tiger's Fury") &&
                                                           SpellManager.Spells["Tiger's Fury"].CooldownTimeLeft().
                                                               TotalSeconds <= 3),
-                //#25
+                        //#25
                         Spell.Cast("Shred",
                                    ret =>
                                    SingularSettings.Instance.Druid.UseShred &&
                                    StyxWoW.Me.IsBehind(StyxWoW.Me.CurrentTarget) &&
-                                   StyxWoW.Me.CurrentTarget.CurrentHealth / Finisherhealth <= 8.5),
+                                   StyxWoW.Me.CurrentTarget.CurrentHealth/Finisherhealth <= 8.5),
                         Spell.Cast("Mangle (Cat)", ret => !StyxWoW.Me.IsBehind(StyxWoW.Me.CurrentTarget) &&
-                                                          StyxWoW.Me.CurrentTarget.CurrentHealth / Finisherhealth <= 8.5),
-                //#26
+                                                          StyxWoW.Me.CurrentTarget.CurrentHealth/Finisherhealth <= 8.5),
+                        //#26
                         Spell.Cast("Shred",
                                    ret =>
                                    SingularSettings.Instance.Druid.UseShred &&
@@ -673,8 +734,8 @@ namespace Singular.ClassSpecific.Druid
                 Spell.Cast("Faerie Fire (Feral)", ret => SingularSettings.Instance.Druid.PullFFF),
                 new Decorator(
                     ret =>
-                    Settings.UseFeralChargeBear && ((WoWUnit)ret).Distance > 8f && ((WoWUnit)ret).Distance < 25f,
-                    Spell.Cast("Feral Charge (Bear)", ret => ((WoWUnit)ret))),
+                    Settings.UseFeralChargeBear && ((WoWUnit) ret).Distance > 8f && ((WoWUnit) ret).Distance < 25f,
+                    Spell.Cast("Feral Charge (Bear)", ret => ((WoWUnit) ret))),
                 // Defensive CDs are hard to 'roll' from this type of logic, so we'll simply use them more as 'oh shit' buttons, than anything.
                 // Barkskin should be kept on CD, regardless of what we're tanking
                 Spell.BuffSelf("Barkskin", ret => StyxWoW.Me.HealthPercent < Settings.FeralBarkskin),
@@ -688,7 +749,7 @@ namespace Singular.ClassSpecific.Druid
                 // Make sure we deal with interrupts...
                 //Spell.Cast(80964 /*"Skull Bash (Bear)"*/, ret => (WoWUnit)ret, ret => ((WoWUnit)ret).IsCasting
                 new Decorator(ret => !SingularSettings.Instance.Druid.DisableInterrupts,
-                              Helpers.Common.CreateInterruptSpellCast(ret => ((WoWUnit)ret))),
+                              Helpers.Common.CreateInterruptSpellCast(ret => ((WoWUnit) ret))),
                 // If we have 3+ units not targeting us, and are within 10yds, then pop our AOE taunt. (These are ones we have 'no' threat on, or don't hold solid threat on)
                 Spell.Cast(
                     "Challenging Roar", ret => TankManager.Instance.NeedToTaunt.First(),
@@ -728,7 +789,7 @@ namespace Singular.ClassSpecific.Druid
                                    SingularSettings.Instance.Druid.UseBerserkBear && SpellManager.HasSpell("Berserk") &&
                                    !SpellManager.Spells["Berserk"].Cooldown && !SpellManager.GlobalCooldown &&
                                    (
-                                       ((WoWUnit)ret).HasSunders() ||
+                                       ((WoWUnit) ret).HasSunders() ||
                                        StyxWoW.Me.CurrentTarget.GetAuraTimeLeft("Faerie Fire", true).TotalSeconds >
                                        (TalentManager.HasGlyph("Berserk") ? 25 : 15)
                                    ) &&
@@ -823,7 +884,7 @@ namespace Singular.ClassSpecific.Druid
                                            StyxWoW.Me.ActiveAuras.ContainsKey("Pulverize") &&
                                            !StyxWoW.Me.CurrentTarget.HasMyAura("Lacerate", 3) &&
                                            StyxWoW.Me.GetAuraTimeLeft("Pulverize", true).TotalSeconds <
-                                           (1.5 + 0.33) * (3 - StyxWoW.Me.CurrentTarget.Auras["Lacerate"].StackCount + 1) &&
+                                           (1.5 + 0.33)*(3 - StyxWoW.Me.CurrentTarget.Auras["Lacerate"].StackCount + 1) &&
                                            StyxWoW.Me.CurrentRage >=
                                            (StyxWoW.Me.ActiveAuras.ContainsKey("Clearcasting") ? 0 : 15)
                                     ),
@@ -871,7 +932,7 @@ namespace Singular.ClassSpecific.Druid
                                    SingularSettings.Instance.Druid.UseBerserkBear && SpellManager.HasSpell("Berserk") &&
                                    !SpellManager.Spells["Berserk"].Cooldown && !SpellManager.GlobalCooldown &&
                                    (
-                                       ((WoWUnit)ret).HasSunders() ||
+                                       ((WoWUnit) ret).HasSunders() ||
                                        StyxWoW.Me.CurrentTarget.GetAuraTimeLeft("Faerie Fire", true).TotalSeconds >
                                        (TalentManager.HasGlyph("Berserk") ? 25 : 15)
                                    ) &&
@@ -938,7 +999,7 @@ namespace Singular.ClassSpecific.Druid
                                    StyxWoW.Me.ActiveAuras.ContainsKey("Pulverize") &&
                                    !StyxWoW.Me.CurrentTarget.HasMyAura("Lacerate", 3) &&
                                    StyxWoW.Me.GetAuraTimeLeft("Pulverize", true).TotalSeconds <
-                                   (1.5 + 0.33) * (3 - StyxWoW.Me.CurrentTarget.Auras["Lacerate"].StackCount + 1) &&
+                                   (1.5 + 0.33)*(3 - StyxWoW.Me.CurrentTarget.Auras["Lacerate"].StackCount + 1) &&
                                    StyxWoW.Me.CurrentRage >=
                                    (StyxWoW.Me.ActiveAuras.ContainsKey("Clearcasting") ? 0 : 15)
                             ),
@@ -951,7 +1012,7 @@ namespace Singular.ClassSpecific.Druid
                         Spell.Cast("Thrash",
                                    ret =>
                                    SpellManager.HasSpell("Thrash") && !SpellManager.Spells["Thrash"].Cooldown
-                                       /*&& !Unit.NearbyUnfriendlyUnits.Any(u => u.Distance < 8 && u.IsCrowdControlled())*/&&
+                                   /*&& !Unit.NearbyUnfriendlyUnits.Any(u => u.Distance < 8 && u.IsCrowdControlled())*/&&
                                    StyxWoW.Me.CurrentRage >=
                                    (StyxWoW.Me.ActiveAuras.ContainsKey("Clearcasting") ? 0 : 25)
                             ),

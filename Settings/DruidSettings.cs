@@ -248,6 +248,13 @@ namespace Singular.Settings
 
         [Setting]
         [DefaultValue(false)]
+        [Category("Pull")]
+        [DisplayName("Prowl and Pounce")]
+        [Description("The cat tries to use Prowl as often as possible and will begin fighting with Pounce")]
+        public bool ProwlPounce { get; set; }
+
+        [Setting]
+        [DefaultValue(false)]
         [Category("Feral")]
         [DisplayName("Manual Forms")]
         [Description(
@@ -257,12 +264,31 @@ namespace Singular.Settings
 
         [Setting]
         [DefaultValue(true)]
-        [Category("Feral")]
+        [Category("Pull")]
         [DisplayName("Pull with Fearie Fire")]
         [Description(
             "Tries to pull eniemes with Fearie Fire (Feral)"
             )]
         public bool PullFFF { get; set; }
+
+
+        [Setting]
+        [DefaultValue(false)]
+        [Category("PvP")]
+        [DisplayName("Shift if Rooted")]
+        [Description(
+            "Tries to powershift when rooted"
+            )]
+        public bool Shift { get; set; }
+
+        [Setting]
+        [DefaultValue(false)]
+        [Category("PvP")]
+        [DisplayName("Always stealth if not mounted")]
+        [Description(
+            "Tries to stealth if not mounted"
+            )]
+        public bool Stealth { get; set; }
 
 
 
