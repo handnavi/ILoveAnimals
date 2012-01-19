@@ -223,6 +223,13 @@ namespace Singular.Settings
         public bool UseFeralChargeCat { get; set; }
 
         [Setting]
+        [DefaultValue(false)]
+        [Category("Feral Cat")]
+        [DisplayName("Feral Charge Pull")]
+        [Description("Use Feral Charge to Pull enemies.")]
+        public bool UseFeralChargeCatPull { get; set; }
+
+        [Setting]
         [DefaultValue(true)]
         [Category("Feral Cat")]
         [DisplayName("Automatic Berserk")]
@@ -273,7 +280,7 @@ namespace Singular.Settings
         [Description(
             "Tries to pull eniemes with Fearie Fire (Feral)"
             )]
-        public bool PullFFF { get; set; }
+        public bool PullFff { get; set; }
 
 
         [Setting]

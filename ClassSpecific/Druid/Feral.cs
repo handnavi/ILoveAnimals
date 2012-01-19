@@ -264,11 +264,11 @@ namespace Singular.ClassSpecific.Druid
                            ret =>
                            StyxWoW.Me.ActiveAuras.ContainsKey("Prowl") &&
                            SingularSettings.Instance.Druid.ProwlPounce),
-                Spell.Cast("Faerie Fire (Feral)", ret => SingularSettings.Instance.Druid.PullFFF),
+                Spell.Cast("Faerie Fire (Feral)", ret => SingularSettings.Instance.Druid.PullFff),
                 Spell.Cast(
                     "Feral Charge (Cat)",
                     ret =>
-                    Settings.UseFeralChargeCat && StyxWoW.Me.CurrentTarget.Distance >= 10 &&
+                    Settings.UseFeralChargeCatPull && StyxWoW.Me.CurrentTarget.Distance >= 10 &&
                     StyxWoW.Me.CurrentTarget.Distance <= 23),
                 Movement.CreateMoveToMeleeBehavior(true));
         }
@@ -298,10 +298,6 @@ namespace Singular.ClassSpecific.Druid
                     ret =>
                     Settings.UseFeralChargeCat && StyxWoW.Me.CurrentTarget.Distance >= 10 &&
                     StyxWoW.Me.CurrentTarget.Distance <= 23),
-                Spell.Cast("Pounce",
-                           ret =>
-                           StyxWoW.Me.ActiveAuras.ContainsKey("Prowl") &&
-                           SingularSettings.Instance.Druid.ProwlPounce),
                 /*Bases on Mew!*/
 
                 /*Tiger's Fury!*/
@@ -733,7 +729,7 @@ namespace Singular.ClassSpecific.Druid
                         new ActionAlwaysSucceed())),
                 Safers.EnsureTarget(),
                 Movement.CreateFaceTargetBehavior(),
-                Spell.Cast("Faerie Fire (Feral)", ret => SingularSettings.Instance.Druid.PullFFF),
+                Spell.Cast("Faerie Fire (Feral)", ret => SingularSettings.Instance.Druid.PullFff),
                 new Decorator(
                     ret =>
                     Settings.UseFeralChargeBear && ((WoWUnit) ret).Distance > 8f && ((WoWUnit) ret).Distance < 25f,
