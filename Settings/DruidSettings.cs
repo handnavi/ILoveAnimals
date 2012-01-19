@@ -11,11 +11,7 @@
 
 #endregion
 
-using System.ComponentModel;
-
 using Styx.Helpers;
-
-using DefaultValue = Styx.Helpers.DefaultValueAttribute;
 
 namespace Singular.Settings
 {
@@ -27,7 +23,7 @@ namespace Singular.Settings
         }
 
         [Setting]
-        [Styx.Helpers.DefaultValue(40)]
+        [DefaultValue(40)]
         [Category("Common")]
         [DisplayName("Innervate Mana")]
         [Description("Innervate will be used when your mana drops below this value")]
@@ -99,7 +95,9 @@ namespace Singular.Settings
         [DefaultValue(3)]
         [Category("Restoration")]
         [DisplayName("Tranquility Count")]
-        [Description("Tranquility will be used when count of party members whom health is below Tranquility health mets this value ")]
+        [Description(
+            "Tranquility will be used when count of party members whom health is below Tranquility health mets this value "
+            )]
         public int TranquilityCount { get; set; }
 
         [Setting]
@@ -120,7 +118,9 @@ namespace Singular.Settings
         [DefaultValue(2)]
         [Category("Restoration")]
         [DisplayName("Wild Growth Count")]
-        [Description("Wild Growth will be used when count of party members whom health is below Wild Growth health mets this value ")]
+        [Description(
+            "Wild Growth will be used when count of party members whom health is below Wild Growth health mets this value "
+            )]
         public int WildGrowthCount { get; set; }
 
         [Setting]
@@ -162,7 +162,9 @@ namespace Singular.Settings
         [DefaultValue(3)]
         [Category("Restoration")]
         [DisplayName("Tree of Life Count")]
-        [Description("Tree of Life will be used when count of party members whom health is below Tree of Life health mets this value ")]
+        [Description(
+            "Tree of Life will be used when count of party members whom health is below Tree of Life health mets this value "
+            )]
         public int TreeOfLifeCount { get; set; }
 
         [Setting]
@@ -194,7 +196,9 @@ namespace Singular.Settings
         [DefaultValue(false)]
         [Category("Feral Cat")]
         [DisplayName("Use Shred")]
-        [Description("Turn on if you want to shred if possible instead of mangle. NOTE: Sometimes the isbehind() check returns wrong values.")]
+        [Description(
+            "Turn on if you want to shred if possible instead of mangle. NOTE: Sometimes the isbehind() check returns wrong values."
+            )]
         public bool UseShred { get; set; }
 
         [Setting]
@@ -291,12 +295,12 @@ namespace Singular.Settings
         public bool Stealth { get; set; }
 
 
-
         [Setting]
         [DefaultValue(100)]
         [Category("Feral")]
         [DisplayName("Barkskin Health")]
-        [Description("Barkskin will be used at this value. Set this to 100 to enable on cooldown usage. (Recommended: 100)")]
+        [Description(
+            "Barkskin will be used at this value. Set this to 100 to enable on cooldown usage. (Recommended: 100)")]
         public int FeralBarkskin { get; set; }
 
         [Setting]
@@ -310,7 +314,9 @@ namespace Singular.Settings
         [DefaultValue(30)]
         [Category("Feral Tanking")]
         [DisplayName("Frenzied Regeneration Health")]
-        [Description("FR will be used at this value. Set this to 100 to enable on cooldown usage. (Recommended: 30 if glyphed. 15 if not.)")]
+        [Description(
+            "FR will be used at this value. Set this to 100 to enable on cooldown usage. (Recommended: 30 if glyphed. 15 if not.)"
+            )]
         public int FrenziedRegenerationHealth { get; set; }
 
         #endregion

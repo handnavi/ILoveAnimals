@@ -293,13 +293,15 @@ namespace Singular.ClassSpecific.Druid
                      StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat),
                     new Sequence(
                         new Action(ret => Lua.DoString("RunMacroText(\"/Cast !Cat Form\")")))),
-                
                 Spell.Cast(
                     "Feral Charge (Cat)",
                     ret =>
                     Settings.UseFeralChargeCat && StyxWoW.Me.CurrentTarget.Distance >= 10 &&
                     StyxWoW.Me.CurrentTarget.Distance <= 23),
-
+                Spell.Cast("Pounce",
+                           ret =>
+                           StyxWoW.Me.ActiveAuras.ContainsKey("Prowl") &&
+                           SingularSettings.Instance.Druid.ProwlPounce),
                 /*Bases on Mew!*/
 
                 /*Tiger's Fury!*/
