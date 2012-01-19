@@ -11,7 +11,12 @@
 
 #endregion
 
+using System.ComponentModel;
+
 using Styx.Helpers;
+using Styx.WoWInternals.WoWObjects;
+
+using DefaultValue = Styx.Helpers.DefaultValueAttribute;
 
 namespace Singular.Settings
 {
@@ -224,7 +229,7 @@ namespace Singular.Settings
 
         [Setting]
         [DefaultValue(false)]
-        [Category("Feral Cat")]
+        [Category("Pull")]
         [DisplayName("Feral Charge Pull")]
         [Description("Use Feral Charge to Pull enemies.")]
         public bool UseFeralChargeCatPull { get; set; }

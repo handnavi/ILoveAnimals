@@ -268,7 +268,7 @@ namespace Singular.ClassSpecific.Druid
                 Spell.Cast(
                     "Feral Charge (Cat)",
                     ret =>
-                    Settings.UseFeralChargeCatPull && StyxWoW.Me.CurrentTarget.Distance >= 10 &&
+                    SingularSettings.Instance.Druid.UseFeralChargeCatPull && StyxWoW.Me.CurrentTarget.Distance >= 10 &&
                     StyxWoW.Me.CurrentTarget.Distance <= 23),
                 Movement.CreateMoveToMeleeBehavior(true));
         }
@@ -623,7 +623,7 @@ namespace Singular.ClassSpecific.Druid
                                    StyxWoW.Me.IsBehind(StyxWoW.Me.CurrentTarget) &&
                                    (StyxWoW.Me.ComboPoints < 5 &&
                                     StyxWoW.Me.CurrentTarget.GetAuraTimeLeft("Rip", true).TotalSeconds <= 3)
-                                   ||
+                                   || SingularSettings.Instance.Druid.UseShred &&
                                    (StyxWoW.Me.ComboPoints == 0 &&
                                     StyxWoW.Me.GetAuraTimeLeft("Savage Roar", true).TotalSeconds <= 2)
                             ),
