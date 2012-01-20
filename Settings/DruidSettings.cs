@@ -300,6 +300,15 @@ namespace Singular.Settings
         [Setting]
         [DefaultValue(false)]
         [Category("PvP")]
+        [DisplayName("Shift if Slowed")]
+        [Description(
+            "Tries to powershift when Slowed"
+            )]
+        public bool ShiftSlow { get; set; }
+
+        [Setting]
+        [DefaultValue(false)]
+        [Category("PvP")]
         [DisplayName("Always stealth if not mounted")]
         [Description(
             "Tries to stealth if not mounted"
@@ -330,6 +339,15 @@ namespace Singular.Settings
             "FR will be used at this value. Set this to 100 to enable on cooldown usage. (Recommended: 30 if glyphed. 15 if not.)"
             )]
         public int FrenziedRegenerationHealth { get; set; }
+
+        [Setting]
+        [DefaultValue(false)]
+        [Category("Feral")]
+        [DisplayName("Always fight in Bear Form")]
+        [Description(
+            "You will always fight in Bear Form if set to true."
+            )]
+        public bool ForceBear { get; set; }
 
         #endregion
     }

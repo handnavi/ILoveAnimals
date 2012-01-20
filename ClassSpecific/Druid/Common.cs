@@ -5,6 +5,8 @@ using Singular.Managers;
 using Singular.Settings;
 using Styx;
 using Styx.Combat.CombatRoutine;
+using Styx.Logic.Combat;
+using Styx.WoWInternals;
 using TreeSharp;
 
 namespace Singular.ClassSpecific.Druid
@@ -31,11 +33,38 @@ namespace Singular.ClassSpecific.Druid
                 Spell.BuffSelf("Cat Form",
                                ret =>
                                !StyxWoW.Me.Mounted && StyxWoW.Me.Shapeshift != ShapeshiftForm.Cat &&
-                               SingularSettings.Instance.Druid.Stealth),
+                               SingularSettings.Instance.Druid.Stealth && !SingularSettings.Instance.Druid.ForceBear),
                 Spell.BuffSelf("Prowl",
                                ret =>
                                SingularSettings.Instance.Druid.Stealth &&
-                               StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat));
+                               StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat),
+                new Decorator(
+                    ret =>
+                    (SingularSettings.Instance.Druid.Shift && StyxWoW.Me.HasAuraWithMechanic(WoWSpellMechanic.Rooted) &&
+                     StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat),
+                    new Sequence(
+                        new Action(ret => Lua.DoString("RunMacroText(\"/Cast !Cat Form\")")))),
+                new Decorator(
+                    ret =>
+                    (SingularSettings.Instance.Druid.ShiftSlow &&
+                     StyxWoW.Me.HasAuraWithMechanic(WoWSpellMechanic.Snared) &&
+                     StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat),
+                    new Sequence(
+                        new Action(ret => Lua.DoString("RunMacroText(\"/Cast !Cat Form\")")))),
+                new Decorator(
+                    ret =>
+                    (SingularSettings.Instance.Druid.Shift && StyxWoW.Me.HasAuraWithMechanic(WoWSpellMechanic.Rooted) &&
+                     StyxWoW.Me.Shapeshift == ShapeshiftForm.Bear),
+                    new Sequence(
+                        new Action(ret => Lua.DoString("RunMacroText(\"/Cast !Bear Form\")")))),
+                new Decorator(
+                    ret =>
+                    (SingularSettings.Instance.Druid.ShiftSlow &&
+                     StyxWoW.Me.HasAuraWithMechanic(WoWSpellMechanic.Snared) &&
+                     StyxWoW.Me.Shapeshift == ShapeshiftForm.Bear),
+                    new Sequence(
+                        new Action(ret => Lua.DoString("RunMacroText(\"/Cast !Bear Form\")"))))
+                );
         }
 
         [Class(WoWClass.Druid)]

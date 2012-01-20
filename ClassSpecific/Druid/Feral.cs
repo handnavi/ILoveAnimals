@@ -167,7 +167,9 @@ namespace Singular.ClassSpecific.Druid
             return new PrioritySelector(
                 new Decorator(
                     // We shall tank if we are assigned as dungeon/raid tank or the current tank is dead
-                    ret => Group.Tank != null && (Group.Tank.IsMe || !Group.Tank.IsAlive),
+                    ret =>
+                    SingularSettings.Instance.Druid.ForceBear ||
+                    (Group.Tank != null && (Group.Tank.IsMe || !Group.Tank.IsAlive)),
                     CreateBearTankCombat()),
                 new Decorator(
                     // Switch to Bear on low live or on adds
@@ -191,7 +193,7 @@ namespace Singular.ClassSpecific.Druid
             return new PrioritySelector(
                 new Decorator(
                     // We shall tank if we are assigned as dungeon/raid tank or the current tank is dead
-                    ret => Group.Tank != null && (Group.Tank.IsMe || !Group.Tank.IsAlive),
+                    ret => SingularSettings.Instance.Druid.ForceBear ||  (Group.Tank != null && (Group.Tank.IsMe || !Group.Tank.IsAlive)),
                     CreateBearTankCombat()),
                 new Decorator(
                     // Switch to Bear on low live or on adds
@@ -293,6 +295,16 @@ namespace Singular.ClassSpecific.Druid
                      StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat),
                     new Sequence(
                         new Action(ret => Lua.DoString("RunMacroText(\"/Cast !Cat Form\")")))),
+                new Decorator(
+                    ret =>
+                    (SingularSettings.Instance.Druid.ShiftSlow &&
+                     StyxWoW.Me.HasAuraWithMechanic(WoWSpellMechanic.Snared) &&
+                     !StyxWoW.Me.ActiveAuras.ContainsKey("Crippling Poison") &&
+                     StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat),
+                    new Sequence(
+                        new Action(ret => Lua.DoString("RunMacroText(\"/Cast !Cat Form\")")))),
+                //StyxWoW.Me.CurrentTarget.HasAnyAura(_slows)
+
                 Spell.Cast(
                     "Feral Charge (Cat)",
                     ret =>
@@ -729,6 +741,20 @@ namespace Singular.ClassSpecific.Druid
                         new ActionAlwaysSucceed())),
                 Safers.EnsureTarget(),
                 Movement.CreateFaceTargetBehavior(),
+                new Decorator(
+                    ret =>
+                    (SingularSettings.Instance.Druid.Shift && StyxWoW.Me.HasAuraWithMechanic(WoWSpellMechanic.Rooted) &&
+                     StyxWoW.Me.Shapeshift == ShapeshiftForm.Bear),
+                    new Sequence(
+                        new Action(ret => Lua.DoString("RunMacroText(\"/Cast !Bear Form\")")))),
+                new Decorator(
+                    ret =>
+                    (SingularSettings.Instance.Druid.ShiftSlow &&
+                     StyxWoW.Me.HasAuraWithMechanic(WoWSpellMechanic.Snared) &&
+                     !StyxWoW.Me.ActiveAuras.ContainsKey("Crippling Poison") &&
+                     StyxWoW.Me.Shapeshift == ShapeshiftForm.Bear),
+                    new Sequence(
+                        new Action(ret => Lua.DoString("RunMacroText(\"/Cast !Bear Form\")")))),
                 Spell.Cast("Faerie Fire (Feral)", ret => SingularSettings.Instance.Druid.PullFff),
                 new Decorator(
                     ret =>
