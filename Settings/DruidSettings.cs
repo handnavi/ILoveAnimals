@@ -263,6 +263,20 @@ namespace Singular.Settings
         public int BearLife { get; set; }
 
         [Setting]
+        [DefaultValue(true)]
+        [Category("PVE Raid Settings Cat")]
+        [DisplayName("Ravage! on CD")]
+        [Description("Cast Ravage! if ready. Disable this if you want max dps.")]
+        public bool Ravage { get; set; }
+
+        [Setting]
+        [DefaultValue(true)]
+        [Category("PVE Raid Settings Cat")]
+        [DisplayName("More FB")]
+        [Description("Cast Ferocious Bite more often while Grinding.")]
+        public bool Bite { get; set; }
+
+        [Setting]
         [DefaultValue(false)]
         [Category("Pull")]
         [DisplayName("Prowl and Pounce")]
