@@ -76,6 +76,10 @@ namespace Singular.ClassSpecific.Druid
         {
             return new PrioritySelector(
                 /*Basic healing while not in raid | dungeon | battleground | arena */
+               Spell.BuffSelf("Prowl",
+                               ret =>
+                               SingularSettings.Instance.Druid.ProwlPounce &&
+                               StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat),
                 new Decorator(
                     ret => !SingularSettings.Instance.Druid.DisableBuffs && !StyxWoW.Me.ActiveAuras.ContainsKey("Prowl")
                            && !StyxWoW.Me.ActiveAuras.ContainsKey("Shadowmeld") && StyxWoW.Me.IsAlive &&

@@ -264,10 +264,6 @@ namespace Singular.ClassSpecific.Druid
                     Resto.CreateRestoDruidHealOnlyBehavior(true)),
                 //based on Ej
                 //http://elitistjerks.com/f73/t127445-feral_cat_cataclysm_4_3_dragon_soul/#Rotation
-                Spell.BuffSelf("Prowl",
-                               ret =>
-                               SingularSettings.Instance.Druid.ProwlPounce &&
-                               StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat),
                 Spell.Cast("Pounce",
                            ret =>
                            StyxWoW.Me.ActiveAuras.ContainsKey("Prowl") &&
@@ -309,10 +305,6 @@ namespace Singular.ClassSpecific.Druid
                      StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat),
                     new Sequence(
                         new Action(ret => Lua.DoString("RunMacroText(\"/Cast !Cat Form\")")))),
-                Spell.Cast("Pounce",
-                           ret =>
-                           StyxWoW.Me.ActiveAuras.ContainsKey("Prowl") &&
-                           SingularSettings.Instance.Druid.ProwlPounce),
                 Spell.Cast(
                     "Feral Charge (Cat)",
                     ret =>
