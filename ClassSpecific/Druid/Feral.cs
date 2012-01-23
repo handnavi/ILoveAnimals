@@ -34,8 +34,12 @@ namespace Singular.ClassSpecific.Druid
                     health = 250000;
                 if (StyxWoW.Me.Level == 85 && StyxWoW.Me.IsInInstance)
                     health = 100000;
-                if (StyxWoW.Me.Level >= 80 && StyxWoW.Me.Level <= 85 && !StyxWoW.Me.IsInInstance && !StyxWoW.Me.IsInRaid)
-                    health = 5000;
+                if (StyxWoW.Me.Level >= 80 && StyxWoW.Me.Level <= 81 && !StyxWoW.Me.IsInInstance && !StyxWoW.Me.IsInRaid)
+                    health = 1000;
+                if (StyxWoW.Me.Level >= 82 && StyxWoW.Me.Level <= 84 && !StyxWoW.Me.IsInInstance && !StyxWoW.Me.IsInRaid)
+                    health = 2500;
+                if (StyxWoW.Me.Level >= 80 && StyxWoW.Me.Level <= 84 && StyxWoW.Me.IsInInstance)
+                    health = 4000;
                 if (StyxWoW.Me.Level >= 70 && StyxWoW.Me.Level <= 79)
                     health = StyxWoW.Me.Level*30;
                 if (StyxWoW.Me.Level >= 10 && StyxWoW.Me.Level <= 69)
@@ -303,7 +307,6 @@ namespace Singular.ClassSpecific.Druid
                      StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat),
                     new Sequence(
                         new Action(ret => Lua.DoString("RunMacroText(\"/Cast !Cat Form\")")))),
-                //StyxWoW.Me.CurrentTarget.HasAnyAura(_slows)
 
                 Spell.Cast(
                     "Feral Charge (Cat)",
@@ -353,7 +356,7 @@ namespace Singular.ClassSpecific.Druid
                             (StyxWoW.Me.ActiveAuras.ContainsKey("Stampede") &&
                              StyxWoW.Me.GetAuraTimeLeft("Stampede", true).TotalSeconds <= 2.0),
                             new Sequence(
-                                new Action(ret => LegacySpellManager.CastSpellById(81170)
+                                new Action(ret => SpellManager.Cast(WoWSpell.FromId(81170), StyxWoW.Me.CurrentTarget)
                                     )
                                 )
                             ),
@@ -364,7 +367,7 @@ namespace Singular.ClassSpecific.Druid
                                     StyxWoW.Me.ActiveAuras.ContainsKey("Tiger's Fury") &&
                                     CurrentEnergy <= (EnergyRegen)),
                             new Sequence(
-                                new Action(ret => LegacySpellManager.CastSpellById(81170)
+                                new Action(ret => SpellManager.Cast(WoWSpell.FromId(81170), StyxWoW.Me.CurrentTarget)
                                     )
                                 )
                             ),
@@ -408,7 +411,7 @@ namespace Singular.ClassSpecific.Druid
                             (StyxWoW.Me.ActiveAuras.ContainsKey("Stampede") &&
                              StyxWoW.Me.GetAuraTimeLeft("Stampede", true).TotalSeconds <= 2.0),
                             new Sequence(
-                                new Action(ret => LegacySpellManager.CastSpellById(81170)
+                                new Action(ret => SpellManager.Cast(WoWSpell.FromId(81170), StyxWoW.Me.CurrentTarget)//SpellManager.Cast(WoWSpell.FromId(81170), StyxWoW.Me.CurrentTarget)
                                     )
                                 )
                             ),
@@ -418,7 +421,7 @@ namespace Singular.ClassSpecific.Druid
                             ret =>
                             (StyxWoW.Me.ActiveAuras.ContainsKey("Stampede") && SingularSettings.Instance.Druid.Ravage),
                             new Sequence(
-                                new Action(ret => LegacySpellManager.CastSpellById(81170)
+                                new Action(ret => SpellManager.Cast(WoWSpell.FromId(81170), StyxWoW.Me.CurrentTarget)
                                     )
                                 )
                             ),
@@ -550,9 +553,9 @@ namespace Singular.ClassSpecific.Druid
                         Spell.Cast("Shred",
                                    ret =>
                                    SingularSettings.Instance.Druid.UseShred &&
-                                   StyxWoW.Me.IsBehind(StyxWoW.Me.CurrentTarget) &&
+                                   StyxWoW.Me.IsSafelyBehind(StyxWoW.Me.CurrentTarget) &&
                                    StyxWoW.Me.ActiveAuras.ContainsKey("Clearcasting")),
-                        Spell.Cast("Mangle (Cat)", ret => (!StyxWoW.Me.IsBehind(StyxWoW.Me.CurrentTarget) || !SingularSettings.Instance.Druid.UseShred) &&
+                        Spell.Cast("Mangle (Cat)", ret => (!StyxWoW.Me.IsSafelyBehind(StyxWoW.Me.CurrentTarget) || !SingularSettings.Instance.Druid.UseShred) &&
                                                           StyxWoW.Me.ActiveAuras.ContainsKey("Clearcasting")
                             ),
                         //#16
@@ -569,7 +572,7 @@ namespace Singular.ClassSpecific.Druid
                                     SpellManager.Spells["Tiger's Fury"].CooldownTimeLeft().TotalSeconds < 1.0 &&
                                     HasTeir13Bonus2),
                             new Sequence(
-                                new Action(ret => LegacySpellManager.CastSpellById(81170)
+                                new Action(ret => SpellManager.Cast(WoWSpell.FromId(81170), StyxWoW.Me.CurrentTarget)
                                     )
                                 )
                             ),
@@ -612,7 +615,7 @@ namespace Singular.ClassSpecific.Druid
                                     CurrentEnergy <= (EnergyRegen)
                                    ),
                             new Sequence(
-                                new Action(ret => LegacySpellManager.CastSpellById(81170)
+                                new Action(ret => SpellManager.Cast(WoWSpell.FromId(81170), StyxWoW.Me.CurrentTarget)
                                     )
                                 )
                             ),
@@ -624,7 +627,7 @@ namespace Singular.ClassSpecific.Druid
                                     CurrentEnergy <= (EnergyRegen)
                                    ),
                             new Sequence(
-                                new Action(ret => LegacySpellManager.CastSpellById(81170)
+                                new Action(ret => SpellManager.Cast(WoWSpell.FromId(81170), StyxWoW.Me.CurrentTarget)
                                     )
                                 )
                             ),
@@ -633,12 +636,12 @@ namespace Singular.ClassSpecific.Druid
                         Spell.Cast("Shred",
                                    ret =>
                                    SingularSettings.Instance.Druid.UseShred &&
-                                   StyxWoW.Me.IsBehind(StyxWoW.Me.CurrentTarget) &&
+                                   StyxWoW.Me.IsSafelyBehind(StyxWoW.Me.CurrentTarget) &&
                                    (StyxWoW.Me.ActiveAuras.ContainsKey("Tiger's Fury") ||
                                     StyxWoW.Me.ActiveAuras.ContainsKey("Berserk")
                                    )
                             ),
-                        Spell.Cast("Mangle (Cat)", ret => (!StyxWoW.Me.IsBehind(StyxWoW.Me.CurrentTarget) || !SingularSettings.Instance.Druid.UseShred) &&
+                        Spell.Cast("Mangle (Cat)", ret => (!StyxWoW.Me.IsSafelyBehind(StyxWoW.Me.CurrentTarget) || !SingularSettings.Instance.Druid.UseShred) &&
                                                           (StyxWoW.Me.ActiveAuras.ContainsKey("Tiger's Fury") ||
                                                            StyxWoW.Me.ActiveAuras.ContainsKey("Berserk")
                                                           )
@@ -647,14 +650,14 @@ namespace Singular.ClassSpecific.Druid
                         Spell.Cast("Shred",
                                    ret =>
                                    SingularSettings.Instance.Druid.UseShred &&
-                                   StyxWoW.Me.IsBehind(StyxWoW.Me.CurrentTarget) &&
+                                   StyxWoW.Me.IsSafelyBehind(StyxWoW.Me.CurrentTarget) &&
                                    (StyxWoW.Me.ComboPoints < 5 &&
                                     StyxWoW.Me.CurrentTarget.GetAuraTimeLeft("Rip", true).TotalSeconds <= 3)
                                    || SingularSettings.Instance.Druid.UseShred &&
                                    (StyxWoW.Me.ComboPoints == 0 &&
                                     StyxWoW.Me.GetAuraTimeLeft("Savage Roar", true).TotalSeconds <= 2)
                             ),
-                        Spell.Cast("Mangle (Cat)", ret => (!StyxWoW.Me.IsBehind(StyxWoW.Me.CurrentTarget) || !SingularSettings.Instance.Druid.UseShred) &&
+                        Spell.Cast("Mangle (Cat)", ret => (!StyxWoW.Me.IsSafelyBehind(StyxWoW.Me.CurrentTarget) || !SingularSettings.Instance.Druid.UseShred) &&
                                                           (StyxWoW.Me.ComboPoints < 5 &&
                                                            StyxWoW.Me.CurrentTarget.GetAuraTimeLeft("Rip", true).
                                                                TotalSeconds <= 3)
@@ -667,10 +670,10 @@ namespace Singular.ClassSpecific.Druid
                         Spell.Cast("Shred",
                                    ret =>
                                    SingularSettings.Instance.Druid.UseShred &&
-                                   StyxWoW.Me.IsBehind(StyxWoW.Me.CurrentTarget) &&
+                                   StyxWoW.Me.IsSafelyBehind(StyxWoW.Me.CurrentTarget) &&
                                    SpellManager.HasSpell("Tiger's Fury") &&
                                    SpellManager.Spells["Tiger's Fury"].CooldownTimeLeft().TotalSeconds <= 3),
-                        Spell.Cast("Mangle (Cat)", ret => (!StyxWoW.Me.IsBehind(StyxWoW.Me.CurrentTarget) || !SingularSettings.Instance.Druid.UseShred) &&
+                        Spell.Cast("Mangle (Cat)", ret => (!StyxWoW.Me.IsSafelyBehind(StyxWoW.Me.CurrentTarget) || !SingularSettings.Instance.Druid.UseShred) &&
                                                           SpellManager.HasSpell("Tiger's Fury") &&
                                                           SpellManager.Spells["Tiger's Fury"].CooldownTimeLeft().
                                                               TotalSeconds <= 3),
@@ -678,18 +681,18 @@ namespace Singular.ClassSpecific.Druid
                         Spell.Cast("Shred",
                                    ret =>
                                    SingularSettings.Instance.Druid.UseShred &&
-                                   StyxWoW.Me.IsBehind(StyxWoW.Me.CurrentTarget) &&
+                                   StyxWoW.Me.IsSafelyBehind(StyxWoW.Me.CurrentTarget) &&
                                    StyxWoW.Me.CurrentTarget.CurrentHealth/Finisherhealth <= 8.5),
-                        Spell.Cast("Mangle (Cat)", ret => (!StyxWoW.Me.IsBehind(StyxWoW.Me.CurrentTarget) || !SingularSettings.Instance.Druid.UseShred) &&
+                        Spell.Cast("Mangle (Cat)", ret => (!StyxWoW.Me.IsSafelyBehind(StyxWoW.Me.CurrentTarget) || !SingularSettings.Instance.Druid.UseShred) &&
                                                           StyxWoW.Me.CurrentTarget.CurrentHealth/Finisherhealth <= 8.5),
                         //#26
                         Spell.Cast("Shred",
                                    ret =>
                                    SingularSettings.Instance.Druid.UseShred &&
-                                   StyxWoW.Me.IsBehind(StyxWoW.Me.CurrentTarget) &&
+                                   StyxWoW.Me.IsSafelyBehind(StyxWoW.Me.CurrentTarget) &&
                                    CurrentEnergy >= (EnergyRegen)
                             ),
-                        Spell.Cast("Mangle (Cat)", ret => (!StyxWoW.Me.IsBehind(StyxWoW.Me.CurrentTarget) || !SingularSettings.Instance.Druid.UseShred) &&
+                        Spell.Cast("Mangle (Cat)", ret => (!StyxWoW.Me.IsSafelyBehind(StyxWoW.Me.CurrentTarget) || !SingularSettings.Instance.Druid.UseShred) &&
                                                           CurrentEnergy >= (EnergyRegen)
                             )
                         )
