@@ -198,6 +198,13 @@ namespace Singular.Settings
         public bool UseBerserkBear { get; set; }
 
         [Setting]
+        [DefaultValue(true)]
+        [Category("Feral Tanking")]
+        [DisplayName("Automatic Demo roar")]
+        [Description("Use demo roar automatically.")]
+        public bool DebuffRoar { get; set; }
+
+        [Setting]
         [DefaultValue(false)]
         [Category("Feral Cat")]
         [DisplayName("Use Shred")]

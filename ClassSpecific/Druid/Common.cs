@@ -27,8 +27,8 @@ namespace Singular.ClassSpecific.Druid
         {
             return new PrioritySelector(
                 new Decorator(
-                    ret => !SingularSettings.Instance.Druid.DisableBuffs && !StyxWoW.Me.ActiveAuras.ContainsKey("Prowl")
-                           && !StyxWoW.Me.ActiveAuras.ContainsKey("Shadowmeld") && StyxWoW.Me.IsAlive,
+                    ret => !SingularSettings.Instance.Druid.DisableBuffs && !StyxWoW.Me.HasAura("Prowl")
+                           && !StyxWoW.Me.HasAura("Shadowmeld") && StyxWoW.Me.IsAlive,
                     Spell.BuffSelf("Mark of the Wild")),
                 Spell.BuffSelf("Cat Form",
                                ret =>
@@ -81,8 +81,8 @@ namespace Singular.ClassSpecific.Druid
                                SingularSettings.Instance.Druid.ProwlPounce &&
                                StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat),
                 new Decorator(
-                    ret => !SingularSettings.Instance.Druid.DisableBuffs && !StyxWoW.Me.ActiveAuras.ContainsKey("Prowl")
-                           && !StyxWoW.Me.ActiveAuras.ContainsKey("Shadowmeld") && StyxWoW.Me.IsAlive &&
+                    ret => !SingularSettings.Instance.Druid.DisableBuffs && !StyxWoW.Me.HasAura("Prowl")
+                           && !StyxWoW.Me.HasAura("Shadowmeld") && StyxWoW.Me.IsAlive &&
                            !StyxWoW.Me.IsInInstance && !StyxWoW.Me.IsInRaid
                            && !StyxWoW.Me.IsPvPFlagged,
                     new PrioritySelector(
@@ -93,8 +93,8 @@ namespace Singular.ClassSpecific.Druid
                         Spell.Cast("Rejuvenation", ctx => StyxWoW.Me.IsAlive && StyxWoW.Me.HealthPercent < 50),
                         Spell.Cast("Regrowth", ctx => StyxWoW.Me.IsAlive && StyxWoW.Me.HealthPercent < 40))),
                 new Decorator(
-                    ret => !SingularSettings.Instance.Druid.DisableBuffs && !StyxWoW.Me.ActiveAuras.ContainsKey("Prowl")
-                           && !StyxWoW.Me.ActiveAuras.ContainsKey("Shadowmeld") && StyxWoW.Me.IsAlive,
+                    ret => !SingularSettings.Instance.Druid.DisableBuffs && !StyxWoW.Me.HasAura("Prowl")
+                           && !StyxWoW.Me.HasAura("Shadowmeld") && StyxWoW.Me.IsAlive,
                     new PrioritySelector(
                         Spell.Buff(
                             "Mark of the Wild",
@@ -120,8 +120,8 @@ namespace Singular.ClassSpecific.Druid
         {
             return new PrioritySelector(
                 new Decorator(
-                    ret => !SingularSettings.Instance.Druid.DisableBuffs && !StyxWoW.Me.ActiveAuras.ContainsKey("Prowl")
-                           && !StyxWoW.Me.ActiveAuras.ContainsKey("Shadowmeld") && StyxWoW.Me.IsAlive,
+                    ret => !SingularSettings.Instance.Druid.DisableBuffs && !StyxWoW.Me.HasAura("Prowl")
+                           && !StyxWoW.Me.HasAura("Shadowmeld") && StyxWoW.Me.IsAlive,
                     new PrioritySelector(
                         Spell.Buff(
                             "Mark of the Wild",

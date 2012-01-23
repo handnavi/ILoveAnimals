@@ -266,7 +266,7 @@ namespace Singular.ClassSpecific.Druid
                 //http://elitistjerks.com/f73/t127445-feral_cat_cataclysm_4_3_dragon_soul/#Rotation
                 Spell.Cast("Pounce",
                            ret =>
-                           StyxWoW.Me.ActiveAuras.ContainsKey("Prowl") &&
+                           StyxWoW.Me.HasAura("Prowl") &&
                            SingularSettings.Instance.Druid.ProwlPounce),
                 Spell.Cast("Faerie Fire (Feral)", ret => SingularSettings.Instance.Druid.PullFff),
                 Spell.Cast(
@@ -1001,7 +1001,7 @@ namespace Singular.ClassSpecific.Druid
                                    SpellManager.HasSpell("Maul") && !SpellManager.Spells["Maul"].Cooldown &&
                                    StyxWoW.Me.CurrentRage > 45),
                         Spell.Cast("Demoralizing Roar",
-                                   ret => Unit.NearbyUnfriendlyUnits.Any(u => u.Distance <= 10 && !u.HasDemoralizing()
+                                   ret => SingularSettings.Instance.Druid.DebuffRoar && Unit.NearbyUnfriendlyUnits.Any(u => u.Distance <= 10 && !u.HasDemoralizing()
                                               )
                             ),
                         Spell.Cast("Mangle (Bear)",
