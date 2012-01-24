@@ -997,7 +997,7 @@ namespace Singular.ClassSpecific.Druid
                     ),
                 new Decorator(
                     ret =>
-                    EnemyUnits.Count == 1,
+                    EnemyUnits.Count <= 1,
                     new PrioritySelector(
                         Spell.Cast("Berserk",
                                    ret =>
