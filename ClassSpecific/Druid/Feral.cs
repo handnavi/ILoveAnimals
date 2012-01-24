@@ -170,19 +170,18 @@ namespace Singular.ClassSpecific.Druid
         {
             return new PrioritySelector(
                 new Decorator(
-                    // We shall tank if we are assigned as dungeon/raid tank or the current tank is dead
-                    ret =>
-                    SingularSettings.Instance.Druid.ForceBear ||
-                    (Group.Tank != null && (Group.Tank.IsMe || !Group.Tank.IsAlive)),
-                    CreateBearTankCombat()),
+                    ret => SingularSettings.Instance.Druid.ForceBear && (!StyxWoW.Me.IsInInstance ||
+                                                                         (Group.Tank != null &&
+                                                                          (Group.Tank.IsMe || !Group.Tank.IsAlive))) ||
+                           StyxWoW.Me.ActiveAuras.ContainsKey("Frenzied Regeneration") ||
+                           StyxWoW.Me.HealthPercent <= SingularSettings.Instance.Druid.BearLife ||
+                           EnemyUnits.Count >= SingularSettings.Instance.Druid.BearCount,
+                    CreateBearTankCombat()
+                    ),
                 new Decorator(
-                    // Switch to Bear on low live or on adds
-                    ret =>
-                    StyxWoW.Me.ActiveAuras.ContainsKey("Frenzied Regeneration") ||
-                    StyxWoW.Me.HealthPercent <= SingularSettings.Instance.Druid.BearLife ||
-                    EnemyUnits.Count >= SingularSettings.Instance.Druid.BearCount,
-                    CreateBearTankCombat()),
-                CreateFeralCatPull()
+                    ret => !SingularSettings.Instance.Druid.ForceBear ||
+                           StyxWoW.Me.IsInInstance && Group.Tank != null && !Group.Tank.IsMe && Group.Tank.IsAlive,
+                    CreateFeralCatPull())
                 );
         }
 
@@ -196,20 +195,19 @@ namespace Singular.ClassSpecific.Druid
         {
             return new PrioritySelector(
                 new Decorator(
-                    // We shall tank if we are assigned as dungeon/raid tank or the current tank is dead
-                    ret =>
-                    SingularSettings.Instance.Druid.ForceBear ||
-                    (Group.Tank != null && (Group.Tank.IsMe || !Group.Tank.IsAlive)),
-                    CreateBearTankCombat()),
+                    ret => SingularSettings.Instance.Druid.ForceBear && (!StyxWoW.Me.IsInInstance ||
+                                                                         (Group.Tank != null &&
+                                                                          (Group.Tank.IsMe || !Group.Tank.IsAlive))) ||
+                           StyxWoW.Me.ActiveAuras.ContainsKey("Frenzied Regeneration") ||
+                           StyxWoW.Me.HealthPercent <= SingularSettings.Instance.Druid.BearLife ||
+                           EnemyUnits.Count >= SingularSettings.Instance.Druid.BearCount,
+                    CreateBearTankCombat()
+                    ),
                 new Decorator(
-                    // Switch to Bear on low live or on adds
-                    ret =>
-                    StyxWoW.Me.ActiveAuras.ContainsKey("Frenzied Regeneration") ||
-                    StyxWoW.Me.HealthPercent <= SingularSettings.Instance.Druid.BearLife ||
-                    EnemyUnits.Count >= SingularSettings.Instance.Druid.BearCount,
-                    CreateBearTankCombat()),
-                CreateFeralCatCombat()
-                );
+                    ret => !SingularSettings.Instance.Druid.ForceBear ||
+                           StyxWoW.Me.IsInInstance && Group.Tank != null && !Group.Tank.IsMe && Group.Tank.IsAlive,
+                    CreateFeralCatCombat()
+                    ));
         }
 
         #region Cat
@@ -830,8 +828,10 @@ namespace Singular.ClassSpecific.Druid
                                    SpellManager.HasSpell("Maul") && !SpellManager.Spells["Maul"].Cooldown &&
                                    StyxWoW.Me.CurrentRage > 45),
                         Spell.Cast("Demoralizing Roar",
-                                   ret => Unit.NearbyUnfriendlyUnits.Any(u => u.Distance <= 10 && !u.HasDemoralizing()
-                                              )
+                                   ret =>
+                                   SingularSettings.Instance.Druid.DebuffRoar &&
+                                   Unit.NearbyUnfriendlyUnits.Any(u => u.Distance <= 10 && !u.HasDemoralizing()
+                                       )
                             ),
                         Spell.Cast("Mangle (Bear)"),
                         Movement.CreateMoveToMeleeBehavior(true)
@@ -871,8 +871,10 @@ namespace Singular.ClassSpecific.Druid
                                    (StyxWoW.Me.ActiveAuras.ContainsKey("Clearcasting") ? 0 : 25)
                             ),
                         Spell.Cast("Demoralizing Roar",
-                                   ret => Unit.NearbyUnfriendlyUnits.Any(u => u.Distance <= 10 && !u.HasDemoralizing()
-                                              )
+                                   ret =>
+                                   SingularSettings.Instance.Druid.DebuffRoar &&
+                                   Unit.NearbyUnfriendlyUnits.Any(u => u.Distance <= 10 && !u.HasDemoralizing()
+                                       )
                             ),
                         new Decorator(
                             ret =>
@@ -1001,8 +1003,10 @@ namespace Singular.ClassSpecific.Druid
                                    SpellManager.HasSpell("Maul") && !SpellManager.Spells["Maul"].Cooldown &&
                                    StyxWoW.Me.CurrentRage > 45),
                         Spell.Cast("Demoralizing Roar",
-                                   ret => SingularSettings.Instance.Druid.DebuffRoar && Unit.NearbyUnfriendlyUnits.Any(u => u.Distance <= 10 && !u.HasDemoralizing()
-                                              )
+                                   ret =>
+                                   SingularSettings.Instance.Druid.DebuffRoar &&
+                                   Unit.NearbyUnfriendlyUnits.Any(u => u.Distance <= 10 && !u.HasDemoralizing()
+                                       )
                             ),
                         Spell.Cast("Mangle (Bear)",
                                    ret =>
