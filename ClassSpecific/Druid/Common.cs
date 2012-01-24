@@ -79,7 +79,8 @@ namespace Singular.ClassSpecific.Druid
                Spell.BuffSelf("Prowl",
                                ret =>
                                SingularSettings.Instance.Druid.ProwlPounce &&
-                               StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat),
+                               StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat
+                               && !StyxWoW.Me.ActiveAuras.ContainsKey("Preparation")),
                 new Decorator(
                     ret => !SingularSettings.Instance.Druid.DisableBuffs && !StyxWoW.Me.HasAura("Prowl")
                            && !StyxWoW.Me.HasAura("Shadowmeld") && StyxWoW.Me.IsAlive &&

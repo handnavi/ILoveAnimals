@@ -289,12 +289,17 @@ namespace Singular.ClassSpecific.Druid
                 new Decorator(ret => !SingularSettings.Instance.Druid.DisableInterrupts,
                               Helpers.Common.CreateInterruptSpellCast(ret => StyxWoW.Me.CurrentTarget)),
                 Movement.CreateMoveBehindTargetBehavior(),
+                Spell.Cast("Dash", ret => SingularSettings.Instance.Druid.Shift && StyxWoW.Me.HasAuraWithMechanic(WoWSpellMechanic.Rooted) &&
+                     StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat),
                 new Decorator(
                     ret =>
                     (SingularSettings.Instance.Druid.Shift && StyxWoW.Me.HasAuraWithMechanic(WoWSpellMechanic.Rooted) &&
-                     StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat),
+                     StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat && SpellManager.HasSpell("Dash") &&
+                           SpellManager.Spells["Dash"].Cooldown),
                     new Sequence(
-                        new Action(ret => Lua.DoString("RunMacroText(\"/Cast !Cat Form\")")))),
+                        new Action(ret => SpellManager.Cast(WoWSpell.FromId(77764))
+                            )
+                        )),
                 new Decorator(
                     ret =>
                     (SingularSettings.Instance.Druid.ShiftSlow &&
@@ -736,6 +741,12 @@ namespace Singular.ClassSpecific.Druid
                 new Decorator(
                     ret => !Settings.ManualForms && StyxWoW.Me.Shapeshift != ShapeshiftForm.Bear,
                     Spell.BuffSelf("Bear Form")),
+                new Decorator(
+                    ret =>
+                    Settings.ManualForms && StyxWoW.Me.Shapeshift != ShapeshiftForm.Bear &&
+                    EnemyUnits.Count >= SingularSettings.Instance.Druid.BearCount && !StyxWoW.Me.IsInInstance ||
+                    StyxWoW.Me.HealthPercent <= SingularSettings.Instance.Druid.BearLife,
+                    Spell.BuffSelf("Bear Form")),
                 // If the user has manual forms enabled. Automatically switch to cat combat if they switch forms.
                 new Decorator(
                     ret => Settings.ManualForms && StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat,
@@ -777,7 +788,9 @@ namespace Singular.ClassSpecific.Druid
                     (SingularSettings.Instance.Druid.Shift && StyxWoW.Me.HasAuraWithMechanic(WoWSpellMechanic.Rooted) &&
                      StyxWoW.Me.Shapeshift == ShapeshiftForm.Bear),
                     new Sequence(
-                        new Action(ret => Lua.DoString("RunMacroText(\"/Cast !Bear Form\")")))),
+                        new Action(ret => SpellManager.Cast(WoWSpell.FromId(77761))
+                            )
+                        )),
                 new Decorator(
                     ret =>
                     (SingularSettings.Instance.Druid.ShiftSlow &&
