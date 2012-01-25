@@ -289,13 +289,16 @@ namespace Singular.ClassSpecific.Druid
                 new Decorator(ret => !SingularSettings.Instance.Druid.DisableInterrupts,
                               Helpers.Common.CreateInterruptSpellCast(ret => StyxWoW.Me.CurrentTarget)),
                 Movement.CreateMoveBehindTargetBehavior(),
-                Spell.Cast("Dash", ret => SingularSettings.Instance.Druid.Shift && StyxWoW.Me.HasAuraWithMechanic(WoWSpellMechanic.Rooted) &&
-                     StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat),
+                Spell.Cast("Dash",
+                           ret =>
+                           SingularSettings.Instance.Druid.Shift &&
+                           StyxWoW.Me.HasAuraWithMechanic(WoWSpellMechanic.Rooted) &&
+                           StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat),
                 new Decorator(
                     ret =>
                     (SingularSettings.Instance.Druid.Shift && StyxWoW.Me.HasAuraWithMechanic(WoWSpellMechanic.Rooted) &&
                      StyxWoW.Me.Shapeshift == ShapeshiftForm.Cat && SpellManager.HasSpell("Dash") &&
-                           SpellManager.Spells["Dash"].Cooldown),
+                     SpellManager.Spells["Dash"].Cooldown),
                     new Sequence(
                         new Action(ret => SpellManager.Cast(WoWSpell.FromId(77764))
                             )
@@ -744,7 +747,8 @@ namespace Singular.ClassSpecific.Druid
                 new Decorator(
                     ret =>
                     Settings.ManualForms && StyxWoW.Me.Shapeshift != ShapeshiftForm.Bear &&
-                    EnemyUnits.Count >= SingularSettings.Instance.Druid.BearCount && !StyxWoW.Me.IsInInstance ||
+                    EnemyUnits.Count >= SingularSettings.Instance.Druid.BearCount && !StyxWoW.Me.IsInInstance &&
+                    !StyxWoW.Me.IsInRaid ||
                     StyxWoW.Me.HealthPercent <= SingularSettings.Instance.Druid.BearLife,
                     Spell.BuffSelf("Bear Form")),
                 // If the user has manual forms enabled. Automatically switch to cat combat if they switch forms.
@@ -758,11 +762,16 @@ namespace Singular.ClassSpecific.Druid
 
         public static Composite CreateBearTankActualCombat()
         {
-            TankManager.NeedTankTargeting = true;
+            if (StyxWoW.Me.IsInInstance || StyxWoW.Me.IsInRaid)
+                TankManager.NeedTankTargeting = true;
             return new PrioritySelector(
                 ctx => TankManager.Instance.FirstUnit ?? StyxWoW.Me.CurrentTarget,
                 //((WoWUnit)ret)
-
+                new Decorator(ret => !StyxWoW.Me.IsInInstance && !StyxWoW.Me.IsInRaid,
+                              new PrioritySelector(
+                                  Safers.EnsureTarget(),
+                                  Movement.CreateMoveToLosBehavior(),
+                                  Movement.CreateFaceTargetBehavior())),
                 Spell.WaitForCast(),
                 // If we're in caster form, and not casting anything (tranq), then fucking switch to bear.
                 new Decorator(
